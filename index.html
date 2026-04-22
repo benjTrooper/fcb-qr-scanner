@@ -1,80 +1,112 @@
-<!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR Scanner</title>
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: black;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
 
-video {
-  width: 100%;
-  max-width: 400px;
-  border-radius: 12px;
-}
+    video {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 12px;
+    }
 
-.status {
-  margin-top: 20px;
-  font-size: 1.2em;
-}
-</style>
+    .status {
+      margin-top: 15px;
+      font-size: 1.1em;
+      opacity: 0.8;
+    }
+
+    .frame {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border: 3px solid #00ff88;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #00ff88;
+    }
+  </style>
 </head>
 
 <body>
-<video id="video" autoplay playsinline></video>
-<div class="status" id="status">Kamera wird gestartet...</div>
+  <div class="frame"></div>
+  <video id="video" autoplay playsinline></video>
+  <div class="status" id="status">Kamera aktiv</div>
 
-<script src="https://unpkg.com/jsqr"></script>
+  <script src="https://unpkg.com/jsqr"></script>
 
-<script>
-const video = document.getElementById('video');
-const status = document.getElementById('status');
+  <script>
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
 
-navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-.then(stream => {
-  video.srcObject = stream;
-  video.play();
-  requestAnimationFrame(scan);
-})
-.catch(err => {
-  status.innerText = '❌ Kamera nicht verfügbar';
-});
+    let scanning = true;
 
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    })
+    .then(stream => {
+      video.srcObject = stream;
+      video.setAttribute("playsinline", true);
+      video.play();
+      requestAnimationFrame(scan);
+    })
+    .catch(err => {
+      status.innerText = '❌ Kamera Fehler: ' + err.name;
+    });
 
-let scanned = false;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
 
-function scan() {
-  if (video.readyState === video.HAVE_ENOUGH_DATA && !scanned) {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
+    function scan() {
+      if (!scanning) return;
 
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, canvas.width, canvas.height);
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
 
-    if (code) {
-      scanned = true;
-      status.innerText = 'QR erkannt!';
+        // 👉 kleinerer Scanbereich = schneller
+        const size = 250;
+        const x = (canvas.width / 2) - (size / 2);
+        const y = (canvas.height / 2) - (size / 2);
 
-      window.location.href = code.data;
-      return;
+        context.drawImage(video, x, y, size, size, 0, 0, size, size);
+
+        const imageData = context.getImageData(0, 0, size, size);
+        const code = jsQR(imageData.data, size, size, {
+          inversionAttempts: "dontInvert"
+        });
+
+        if (code) {
+          scanning = false;
+          status.innerText = '✅ QR erkannt';
+
+          // kleines Delay für UX
+          setTimeout(() => {
+            window.location.href = code.data;
+          }, 300);
+
+          return;
+        }
+      }
+
+      // 👉 bewusst etwas langsamer für Performance
+      setTimeout(() => requestAnimationFrame(scan), 100);
     }
-  }
-
-  requestAnimationFrame(scan);
-}
-</script>
-
+  </script>
 </body>
 </html>
