@@ -3,7 +3,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QR Scanner PRO</title>
+  <title>QR Scanner FINAL</title>
 
   <style>
     body {
@@ -45,7 +45,6 @@
       font-size: 1.1em;
     }
 
-    /* START SCREEN */
     #startScreen {
       position: fixed;
       inset: 0;
@@ -67,7 +66,6 @@
       font-weight: bold;
     }
 
-    /* LOADING */
     #loading {
       position: fixed;
       inset: 0;
@@ -120,37 +118,44 @@
 let video = document.getElementById("video");
 let status = document.getElementById("status");
 let loading = document.getElementById("loading");
+
 let scanning = false;
 let stream;
+let scanActive = true;
 
-function startCamera() {
-  document.getElementById("startScreen").style.display = "none";
+async function startCamera() {
+  try {
+    document.getElementById("startScreen").style.display = "none";
 
-  navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
-  })
-  .then(s => {
-    stream = s;
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
 
-    video.onloadedmetadata = () => {
-      video.play();
-      scanning = true;
-      status.innerText = "Kamera aktiv";
-      requestAnimationFrame(scan);
-    };
-  })
-  .catch(err => {
+    await video.play();
+
+    scanning = true;
+    scanActive = true;
+    status.innerText = "Kamera aktiv";
+
+    requestAnimationFrame(scan);
+
+  } catch (err) {
     status.innerText = "❌ Kamera Fehler: " + err.name;
-  });
+    console.error(err);
+  }
 }
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
 function scan() {
-  if (!scanning) return;
+  if (!scanning || !scanActive) {
+    requestAnimationFrame(scan);
+    return;
+  }
 
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
 
@@ -167,27 +172,18 @@ function scan() {
 
     if (code) {
       scanning = false;
+      scanActive = false;
 
       loading.style.display = "flex";
       status.innerText = "QR erkannt";
 
-      setTimeout(() => {
-        window.location.href = code.data;
-      }, 250);
-
+      window.location.href = code.data;
       return;
     }
   }
 
-  setTimeout(() => requestAnimationFrame(scan), 60);
+  requestAnimationFrame(scan);
 }
-
-// 🔁 SAFE RETURN HANDLING (Apps Script kompatibel)
-window.addEventListener("pageshow", function() {
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-  }
-});
 </script>
 
 </body>
