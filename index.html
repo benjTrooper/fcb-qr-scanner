@@ -1,97 +1,79 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QR Scanner FINAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Scanner PRO</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: black;
-      color: white;
-      overflow: hidden;
-    }
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: black;
+    color: white;
+    overflow: hidden;
+  }
 
-    #app {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      position: relative;
-    }
+  #startScreen {
+    position: fixed;
+    inset: 0;
+    background: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
 
-    video {
-      width: 100%;
-      max-width: 450px;
-      border-radius: 12px;
-    }
+  #startScreen button {
+    padding: 15px 25px;
+    font-size: 18px;
+    background: #00ff88;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+  }
 
-    .frame {
-      position: absolute;
-      width: 240px;
-      height: 240px;
-      border: 3px solid #00ff88;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #00ff88;
-      pointer-events: none;
-    }
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: relative;
+  }
 
-    #status {
-      margin-top: 10px;
-      opacity: 0.8;
-      font-size: 1.1em;
-    }
+  video {
+    width: 100%;
+    max-width: 450px;
+    border-radius: 12px;
+  }
 
-    #startScreen {
-      position: fixed;
-      inset: 0;
-      background: black;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 10;
-    }
+  .frame {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border: 3px solid #00ff88;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #00ff88;
+    pointer-events: none;
+  }
 
-    #startScreen button {
-      padding: 15px 25px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
-      background: #00ff88;
-      color: black;
-      font-weight: bold;
-    }
+  #status {
+    margin-top: 10px;
+    opacity: 0.8;
+  }
 
-    #loading {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 20;
-    }
-
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 6px solid #333;
-      border-top: 6px solid #00ff88;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 20;
+  }
+</style>
 </head>
 
 <body>
@@ -101,10 +83,7 @@
   <button onclick="startCamera()">Kamera starten</button>
 </div>
 
-<div id="loading">
-  <div class="spinner"></div>
-  <div>Wird geprüft...</div>
-</div>
+<div id="loading">⏳ Prüfe Code...</div>
 
 <div id="app">
   <video id="video" autoplay playsinline></video>
@@ -119,46 +98,39 @@ let video = document.getElementById("video");
 let status = document.getElementById("status");
 let loading = document.getElementById("loading");
 
-let scanning = false;
 let stream;
-let scanActive = true;
+let scanning = false;
 
-async function startCamera() {
-  try {
-    document.getElementById("startScreen").style.display = "none";
+function startCamera() {
+  document.getElementById("startScreen").style.display = "none";
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    });
-
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment" }
+  })
+  .then(s => {
+    stream = s;
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
 
-    await video.play();
-
-    scanning = true;
-    scanActive = true;
-    status.innerText = "Kamera aktiv";
-
-    requestAnimationFrame(scan);
-
-  } catch (err) {
+    video.onloadedmetadata = () => {
+      video.play();
+      scanning = true;
+      status.innerText = "Kamera aktiv";
+      requestAnimationFrame(scan);
+    };
+  })
+  .catch(err => {
     status.innerText = "❌ Kamera Fehler: " + err.name;
-    console.error(err);
-  }
+  });
 }
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
 function scan() {
-  if (!scanning || !scanActive) {
-    requestAnimationFrame(scan);
-    return;
-  }
+  if (!scanning) return;
 
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -172,12 +144,39 @@ function scan() {
 
     if (code) {
       scanning = false;
-      scanActive = false;
 
       loading.style.display = "flex";
-      status.innerText = "QR erkannt";
 
-      window.location.href = code.data;
+      // 👉 WICHTIG: Apps Script API call (kein redirect mehr!)
+      fetch(code.data)
+        .then(r => r.json())
+        .then(res => {
+
+          if (res.allowed) {
+            loading.innerHTML = "✅ Mitglied: " + res.name;
+          } else {
+            loading.innerHTML = "❌ Kein Zutritt";
+          }
+
+          // nach kurzer Zeit wieder scannen
+          setTimeout(() => {
+            loading.style.display = "none";
+            scanning = true;
+            requestAnimationFrame(scan);
+          }, 2000);
+
+        })
+        .catch(err => {
+          loading.innerHTML = "❌ Fehler";
+          console.error(err);
+
+          setTimeout(() => {
+            loading.style.display = "none";
+            scanning = true;
+            requestAnimationFrame(scan);
+          }, 2000);
+        });
+
       return;
     }
   }
