@@ -54,24 +54,48 @@
     height: 240px;
     border: 3px solid #00ff88;
     border-radius: 12px;
-    box-shadow: 0 0 20px #00ff88;
     pointer-events: none;
   }
 
   #status {
     margin-top: 10px;
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
-  #loading {
+  /* FULL SCREEN RESULT */
+  #overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.9);
     display: none;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
     z-index: 20;
+    text-align: center;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 40px;
+    margin: 10px 0;
+  }
+
+  #overlay p {
+    font-size: 22px;
+  }
+
+  .green {
+    background: #00c853;
+    color: black;
+  }
+
+  .red {
+    background: #d50000;
+    color: white;
+  }
+
+  #loadingText {
+    font-size: 24px;
   }
 </style>
 </head>
@@ -83,7 +107,11 @@
   <button onclick="startCamera()">Kamera starten</button>
 </div>
 
-<div id="loading">⏳ Prüfe Code...</div>
+<div id="overlay">
+  <div id="loadingText">⏳ Prüfe...</div>
+  <h1 id="title"></h1>
+  <p id="info"></p>
+</div>
 
 <div id="app">
   <video id="video" autoplay playsinline></video>
@@ -96,9 +124,11 @@
 <script>
 let video = document.getElementById("video");
 let status = document.getElementById("status");
-let loading = document.getElementById("loading");
+let overlay = document.getElementById("overlay");
+let title = document.getElementById("title");
+let info = document.getElementById("info");
+let loadingText = document.getElementById("loadingText");
 
-let stream;
 let scanning = false;
 
 function startCamera() {
@@ -107,8 +137,7 @@ function startCamera() {
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: "environment" }
   })
-  .then(s => {
-    stream = s;
+  .then(stream => {
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
 
@@ -131,6 +160,7 @@ function scan() {
   if (!scanning) return;
 
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -138,43 +168,26 @@ function scan() {
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    const code = jsQR(imageData.data, canvas.width, canvas.height, {
-      inversionAttempts: "attemptBoth"
-    });
+    const code = jsQR(imageData.data, canvas.width, canvas.height);
 
     if (code) {
       scanning = false;
 
-      loading.style.display = "flex";
+      showLoading();
 
-      // 👉 WICHTIG: Apps Script API call (kein redirect mehr!)
       fetch(code.data)
         .then(r => r.json())
         .then(res => {
 
           if (res.allowed) {
-            loading.innerHTML = "✅ Mitglied: " + res.name;
+            showResult(true, res);
           } else {
-            loading.innerHTML = "❌ Kein Zutritt";
+            showResult(false, res);
           }
-
-          // nach kurzer Zeit wieder scannen
-          setTimeout(() => {
-            loading.style.display = "none";
-            scanning = true;
-            requestAnimationFrame(scan);
-          }, 2000);
 
         })
         .catch(err => {
-          loading.innerHTML = "❌ Fehler";
-          console.error(err);
-
-          setTimeout(() => {
-            loading.style.display = "none";
-            scanning = true;
-            requestAnimationFrame(scan);
-          }, 2000);
+          showResult(false, { name: "Fehler", year: "" });
         });
 
       return;
@@ -182,6 +195,36 @@ function scan() {
   }
 
   requestAnimationFrame(scan);
+}
+
+function showLoading() {
+  overlay.style.display = "flex";
+  overlay.className = "";
+  loadingText.style.display = "block";
+  title.innerText = "";
+  info.innerText = "";
+  loadingText.innerText = "⏳ Prüfe...";
+}
+
+function showResult(ok, res) {
+
+  loadingText.style.display = "none";
+
+  if (ok) {
+    overlay.className = "green";
+    title.innerText = "✔ MITGLIED";
+    info.innerText = res.name + "\\nJahrgang: " + res.year;
+  } else {
+    overlay.className = "red";
+    title.innerText = "✖ KEIN ZUTRITT";
+    info.innerText = res.name || "";
+  }
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+    scanning = true;
+    requestAnimationFrame(scan);
+  }, 2500);
 }
 </script>
 
