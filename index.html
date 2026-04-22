@@ -1,3 +1,7 @@
+// Verbesserte QR Scanner Version (schnell + Loading Screen)
+function doGet() {
+  return HtmlService.createHtmlOutput(`
+<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -81,4 +85,69 @@
   <!-- Loading Screen -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
+    <div>Wird geprüft...</div>
+  </div>
+
+  <script src="https://unpkg.com/jsqr"></script>
+
+  <script>
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const loading = document.getElementById('loading');
+
+    let scanning = true;
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    })
+    .then(stream => {
+      video.srcObject = stream;
+      video.setAttribute("playsinline", true);
+      video.play();
+      requestAnimationFrame(scan);
+    })
+    .catch(err => {
+      status.innerText = '❌ Kamera Fehler';
+    });
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+
+    function scan() {
+      if (!scanning) return;
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height, {
+          inversionAttempts: "attemptBoth"
+        });
+
+        if (code) {
+          scanning = false;
+
+          // 👉 Loading Screen anzeigen
+          loading.style.display = "flex";
+          status.innerText = "Prüfe Code...";
+
+          setTimeout(() => {
+            window.location.href = code.data;
+          }, 400);
+
+          return;
+        }
+      }
+
+      // 👉 leicht optimiert für Speed (nicht zu oft)
+      setTimeout(() => requestAnimationFrame(scan), 60);
+    }
+  </script>
+
+</body>
 </html>
+  `);
+}
