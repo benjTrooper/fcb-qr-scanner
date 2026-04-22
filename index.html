@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: black;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+video {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+}
+
+.status {
+  margin-top: 20px;
+  font-size: 1.2em;
+}
+</style>
+</head>
+
+<body>
+<video id="video" autoplay playsinline></video>
+<div class="status" id="status">Kamera wird gestartet...</div>
+
+<script src="https://unpkg.com/jsqr"></script>
+
+<script>
+const video = document.getElementById('video');
+const status = document.getElementById('status');
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+.then(stream => {
+  video.srcObject = stream;
+  video.play();
+  requestAnimationFrame(scan);
+})
+.catch(err => {
+  status.innerText = '❌ Kamera nicht verfügbar';
+});
+
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+
+let scanned = false;
+
+function scan() {
+  if (video.readyState === video.HAVE_ENOUGH_DATA && !scanned) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+    if (code) {
+      scanned = true;
+      status.innerText = 'QR erkannt!';
+
+      window.location.href = code.data;
+      return;
+    }
+  }
+
+  requestAnimationFrame(scan);
+}
+</script>
+
+</body>
+</html>
