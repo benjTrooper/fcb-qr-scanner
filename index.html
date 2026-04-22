@@ -97,17 +97,23 @@ function doGet() {
 
     let scanning = true;
 
+    let stream;
+
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' }
+      video: { facingMode: "environment" }
     })
-    .then(stream => {
+    .then(s => {
+      stream = s;
       video.srcObject = stream;
-      video.setAttribute("playsinline", true);
-      video.play();
-      requestAnimationFrame(scan);
+    
+      video.onloadedmetadata = () => {
+        video.play();
+        requestAnimationFrame(scan);
+      };
     })
     .catch(err => {
-      status.innerText = '❌ Kamera Fehler';
+      status.innerText = "❌ Kamera nicht verfügbar: " + err.name;
+      console.error(err);
     });
 
     const canvas = document.createElement('canvas');
