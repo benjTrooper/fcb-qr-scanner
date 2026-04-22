@@ -73,42 +73,40 @@
     const context = canvas.getContext('2d', { willReadFrequently: true });
 
     function scan() {
-      if (!scanning) return;
+  if (!scanning) return;
 
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
 
-        // 👉 kleinerer Scanbereich = schneller
-        const size = Math.min(canvas.width, canvas.height) * 0.6;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-        const x = (canvas.width - size) / 2;
-        const y = (canvas.height - size) / 2;
-        
-        context.drawImage(video, x, y, size, size, 0, 0, size, size);
-        
-        const imageData = context.getImageData(0, 0, size, size);
-        
-        const code = jsQR(imageData.data, size, size, {
-          inversionAttempts: "attemptBoth"
-        });
+    // 👉 GANZES Bild scannen (wichtig!)
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        if (code) {
-          scanning = false;
-          status.innerText = '✅ QR erkannt';
+    const imageData = context.getImageData(
+      0, 0,
+      canvas.width,
+      canvas.height
+    );
 
-          // kleines Delay für UX
-          setTimeout(() => {
-            window.location.href = code.data;
-          }, 300);
+    const code = jsQR(imageData.data, canvas.width, canvas.height, {
+      inversionAttempts: "attemptBoth"
+    });
 
-          return;
-        }
-      }
+    if (code) {
+      scanning = false;
+      status.innerText = "✅ QR erkannt";
 
-      // 👉 bewusst etwas langsamer für Performance
-      setTimeout(() => requestAnimationFrame(scan), 100);
+      setTimeout(() => {
+        window.location.href = code.data;
+      }, 200);
+
+      return;
     }
+  }
+
+  requestAnimationFrame(scan);
+}
   </script>
 </body>
 </html>
