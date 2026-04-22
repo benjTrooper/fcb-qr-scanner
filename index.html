@@ -1,11 +1,7 @@
-// Verbesserte QR Scanner Version (schnell + Loading Screen)
-function doGet() {
-  return HtmlService.createHtmlOutput(`
-<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QR Scanner</title>
+  <title>QR Scanner PRO</title>
 
   <style>
     body {
@@ -14,17 +10,36 @@ function doGet() {
       background: black;
       color: white;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       overflow: hidden;
     }
 
+    #container {
+      position: relative;
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+    }
+
     video {
       width: 100%;
-      max-width: 420px;
       border-radius: 12px;
+      background: black;
+    }
+
+    .frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 220px;
+      height: 220px;
+      transform: translate(-50%, -50%);
+      border: 3px solid #00ff88;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #00ff88;
+      pointer-events: none;
     }
 
     .status {
@@ -33,24 +48,14 @@ function doGet() {
       opacity: 0.8;
     }
 
-    .frame {
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      border: 3px solid #00ff88;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #00ff88;
-      pointer-events: none;
-    }
-
-    /* 👉 Loading Screen */
+    /* Loading Screen */
     .loading {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       display: none;
       align-items: center;
       justify-content: center;
@@ -63,97 +68,4 @@ function doGet() {
       height: 60px;
       border: 6px solid #333;
       border-top: 6px solid #00ff88;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="frame"></div>
-
-  <video id="video" autoplay playsinline></video>
-  <div class="status" id="status">Kamera aktiv</div>
-
-  <!-- Loading Screen -->
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div>Wird geprüft...</div>
-  </div>
-
-  <script src="https://unpkg.com/jsqr"></script>
-
-  <script>
-    const video = document.getElementById('video');
-    const status = document.getElementById('status');
-    const loading = document.getElementById('loading');
-
-    let scanning = true;
-
-    let stream;
-
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    })
-    .then(s => {
-      stream = s;
-      video.srcObject = stream;
-    
-      video.onloadedmetadata = () => {
-        video.play();
-        requestAnimationFrame(scan);
-      };
-    })
-    .catch(err => {
-      status.innerText = "❌ Kamera nicht verfügbar: " + err.name;
-      console.error(err);
-    });
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-
-    function scan() {
-      if (!scanning) return;
-
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height, {
-          inversionAttempts: "attemptBoth"
-        });
-
-        if (code) {
-          scanning = false;
-
-          // 👉 Loading Screen anzeigen
-          loading.style.display = "flex";
-          status.innerText = "Prüfe Code...";
-
-          setTimeout(() => {
-            window.location.href = code.data;
-          }, 400);
-
-          return;
-        }
-      }
-
-      // 👉 leicht optimiert für Speed (nicht zu oft)
-      setTimeout(() => requestAnimationFrame(scan), 60);
-    }
-  </script>
-
-</body>
 </html>
-  `);
-}
