@@ -210,8 +210,11 @@ function scan() {
     if (code) {
       scanning = false;
       showLoading();
-
-      fetch(code.data)
+      
+      const url = new URL(code.data);
+      url.searchParams.set("scanner", "true");
+      
+      fetch(url.toString())
         .then(r => r.json())
         .then(res => {
           showResult(res.allowed, res);
