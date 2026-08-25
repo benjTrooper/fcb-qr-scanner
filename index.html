@@ -257,7 +257,7 @@ function showResult(ok, res) {
 
   overlay.classList.remove("green", "yellow", "red");
 
-  if (ok) {
+  if (ok && res.alreadyScannedtoday === true) {
     // Zutritt erlaubt, aber heute bereits gescannt
     overlay.classList.add("yellow");
     title.innerText = `⚠ ${res.group}`;
