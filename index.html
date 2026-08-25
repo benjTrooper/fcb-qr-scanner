@@ -142,7 +142,7 @@ video {
 <body>
 
 <div id="startScreen">
-  <h2>QR Scanner PRO 5</h2>
+  <h2>QR Scanner PRO</h2>
   <button onclick="startCamera()">Kamera starten</button>
 </div>
 
@@ -267,7 +267,7 @@ function showResult(ok, res) {
     // Normaler gültiger Scan
     overlay.classList.add("green");
     title.innerText = `✔ ${res.group}`;
-    info.innerText = `${res.name}\nJahrgang: ${res.year}\nGescannt: ${res.alreadyScannedToday}`;
+    info.innerText = `${res.name}\nJahrgang: ${res.year}`;
 
   } else {
     // Kein Zutritt
