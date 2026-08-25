@@ -142,7 +142,7 @@ video {
 <body>
 
 <div id="startScreen">
-  <h2>QR Scanner PRO 2</h2>
+  <h2>QR Scanner PRO 3</h2>
   <button onclick="startCamera()">Kamera starten</button>
 </div>
 
@@ -257,7 +257,7 @@ function showResult(ok, res) {
 
   overlay.classList.remove("green", "yellow", "red");
 
-  if (ok && res.alreadyScannedtoday === "true") {
+  if (ok && res.alreadyScannedtoday) {
     // Zutritt erlaubt, aber heute bereits gescannt
     overlay.classList.add("yellow");
     title.innerText = `⚠ ${res.group}`;
