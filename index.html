@@ -210,8 +210,20 @@ function scan() {
     if (code) {
       scanning = false;
       showLoading();
-      
-      const url = new URL(code.data);
+      const baseUrl = "https://script.google.com/macros/s/AKfycbyUB7OXYg0h1bMrOmkWf5HWYiDYd0HvVgMNJ5VSBswxUMzcgOsHv-CDI7cMS4ASd63C/exec";
+
+      // QR enthält z.B.:
+      // id%3D12345%26token%3DABCDEF
+    
+      const decoded = decodeURIComponent(code.data);
+      // => id=12345&token=ABCDEF
+    
+      const qrParams = new URLSearchParams(decoded);
+    
+      const url = new URL(baseUrl);
+    
+      url.searchParams.set("id", qrParams.get("id"));
+      url.searchParams.set("token", qrParams.get("token"));
       url.searchParams.set("scanner", "true");
       
       fetch(url.toString())
