@@ -142,7 +142,7 @@ video {
 <body>
 
 <div id="startScreen">
-  <h2>QR Scanner PRO 3</h2>
+  <h2>QR Scanner PRO 4</h2>
   <button onclick="startCamera()">Kamera starten</button>
 </div>
 
@@ -211,7 +211,7 @@ function scan() {
     if (code) {
       scanning = false;
       showLoading();
-      const baseUrl = "https://script.google.com/macros/s/AKfycbzx_FvbEhQRJA_qvhQjvLwTr2wVe7AzADfP-NHeWwEwk1iWIeLuWliGIvnknD05ACb2/exec";
+      const baseUrl = "https://script.google.com/macros/s/AKfycbwA4LuzLrJsL8bZ5SB4kv7ETxf--F5Pbn_DR69buo6nNxxbpNaZpoe5r10jAhl4vdCj/exec";
 
       // QR enthält z.B.:
       // id%3D12345%26token%3DABCDEF
@@ -257,7 +257,7 @@ function showResult(ok, res) {
 
   overlay.classList.remove("green", "yellow", "red");
 
-  if (ok && res.alreadyScannedtoday) {
+  if (ok && res.alreadyScannedtoday === true) {
     // Zutritt erlaubt, aber heute bereits gescannt
     overlay.classList.add("yellow");
     title.innerText = `⚠ ${res.group}`;
