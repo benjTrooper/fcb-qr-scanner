@@ -210,7 +210,7 @@ function scan() {
     if (code) {
       scanning = false;
       showLoading();
-      const baseUrl = "https://script.google.com/macros/s/AKfycbyUB7OXYg0h1bMrOmkWf5HWYiDYd0HvVgMNJ5VSBswxUMzcgOsHv-CDI7cMS4ASd63C/exec";
+      const baseUrl = "https://script.google.com/macros/s/AKfycbzx_FvbEhQRJA_qvhQjvLwTr2wVe7AzADfP-NHeWwEwk1iWIeLuWliGIvnknD05ACb2/exec";
 
       // QR enthält z.B.:
       // id%3D12345%26token%3DABCDEF
@@ -258,7 +258,7 @@ function showResult(ok, res) {
 
   if (ok) {
     overlay.classList.add("green");
-    title.innerText = "✔ MITGLIED";
+    title.innerText = `✔ ${res.group}`;
     info.innerText = `${res.name}\nJahrgang: ${res.year}`;
   } else {
     overlay.classList.add("red");
