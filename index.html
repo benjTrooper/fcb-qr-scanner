@@ -267,7 +267,11 @@ function showResult(ok, res) {
     // Normaler gültiger Scan
     overlay.classList.add("green");
     title.innerText = `✔ ${res.group}`;
-    info.innerText = `${res.name}\nJahrgang: ${res.year}`;
+    if (res.group === "Dauerkarte") {
+      info.innerText = `${res.name}`;
+    } else {
+      info.innerText = `${res.name}\nJahrgang: ${res.year}`;
+    }
 
   } else {
     // Kein Zutritt
