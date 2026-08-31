@@ -279,7 +279,7 @@ function showResult(ok, res) {
     title.innerText = "✖ KEIN ZUTRITT";
     info.innerText = res.name || "";
   }
-  info.innerText += `\nreadMs:${res.timing.readMs}\nwriteMs:${res.timing.writeMs}\ntotalMs:${res.timing.totalMs}`;
+  info.innerText += `\nAlreadyScanned:${res.alreadyScannedToday}\nreadMs:${res.timing.readMs}\nwriteMs:${res.timing.writeMs}\ntotalMs:${res.timing.totalMs}`;
 
   setTimeout(() => {
     overlay.style.display = "none";
