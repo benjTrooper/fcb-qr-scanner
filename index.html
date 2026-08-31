@@ -211,7 +211,7 @@ function scan() {
     if (code) {
       scanning = false;
       showLoading();
-      const baseUrl = "https://script.google.com/macros/s/AKfycbxsujBuw-2xuOZo48tIlFiaHhQ5d7iZWyKvJ9N577GBBAqtqe8aEMvANqa7ojeaRhgT/exec";
+      const baseUrl = "https://script.google.com/macros/s/AKfycbw8au4DbSzwUZs9YTKROcunYH4tX94fQktOaXAUJchJesbx6KtE6KDW45G56cQO_08V/exec";
 
       // QR enthält z.B.:
       // id%3D12345%26token%3DABCDEF
@@ -279,6 +279,7 @@ function showResult(ok, res) {
     title.innerText = "✖ KEIN ZUTRITT";
     info.innerText = res.name || "";
   }
+  info.innerText += `\nreadMs:${res.timing.readMs}\nwriteMs:${res.timing.writeMs}\ntotalMs:${res.timing.totalMs}`;
 
   setTimeout(() => {
     overlay.style.display = "none";
